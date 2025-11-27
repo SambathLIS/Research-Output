@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facutly Research Dashboard</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* --- Professional CSS Styling for Dashboard --- */
+        :root {
+            --bits-blue: #004d99; /* Primary BITS Dark Blue */
+            --bits-red: #cc0000;
+            --light-bg: #f7f9fc;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --card-bg: white;
+            --chart-color: #008080; 
+            --dropdown-border: #ccc; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            /* Background remains white to match the new logo */
+            background-color: var(--card-bg); 
+            color: var(--bits-blue); 
+            padding: 15px 50px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-logo {
+            height: 80px; 
+            object-fit: contain;
+        }
+        
+        .header-title-container {
+            flex-grow: 1;
+            color:#1a165aF0;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--bits-blue); 
+            text-align: left;
+        }
+
+        .main-content {
+            padding: 30px 50px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- Layout: Metrics (ADJUSTED FOR 3 CARDS) --- */
+        .metrics-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            flex: 1; /* Ensures equal width for the 3 remaining cards */
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card h2 {
+            color: var(--bits-blue);
+            font-size: 1.1em;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--bits-red);
+            margin: 5px 0 0;
+        }
+        
+        /* --- Chart Section Styling --- */
+        .chart-section {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 40vh; 
+            width: 100%;
+        }
+
+
+        /* --- Publications List / Table Section --- */
+        .publications-section {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+        }
+
+        .publications-section h2 {
+            color: #1a1a1a;
+            font-size: 1.6em;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Table Controls (Search, Filters, Pagination Limit) --- */
+        .table-controls-top {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .table-controls-top input[type="text"] {
+            padding: 10px 15px; 
+            border: 1px solid var(--dropdown-border);
+            border-radius: 5px;
+            font-size: 1em;
+            width: 350px; 
+            box-sizing: border-box;
+            background-color: var(--light-bg); 
+            height: 40px;
+        }
+        
+        /* --- Filter Dropdown Styling --- */
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-button {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 10px 15px; 
+            border: 1px solid var(--dropdown-border);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            height: 40px; 
+        }
+        
+        .filter-button:hover {
+            background-color: #e5e5e5;
+        }
+        
+        .filter-content {
+            display: none;
+            position: absolute;
+            background-color: var(--card-bg);
+            min-width: 280px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 100;
+            border: 1px solid var(--dropdown-border);
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 250px; 
+            overflow-y: auto;
+        }
+        
+        .filter-dropdown.open .filter-content {
+            display: block;
+        }
+        
+        .filter-option {
+            padding: 7px 0; 
+            font-size: 0.95em;
+        }
+        
+        /* KEY CHANGE: Left-align filter content */
+        .filter-option label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            /* Changed from space-between */
+            justify-content: flex-start; 
+            gap: 15px; /* Space between text and count */
+        }
+        
+        .filter-option input[type="checkbox"] {
+            margin-right: 0; /* Removed margin as gap is used */
+            transform: scale(1.1); 
+        }
+        
+        .filter-count {
+            color: #777;
+            font-size: 0.9em;
+            margin-left: auto; /* Pushes the count to the right, maintaining left alignment for other elements */
+        }
+
+        /* --- Table Styling --- */
+        .data-table-container {
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow: hidden; 
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            table-layout: fixed; 
+        }
+
+        th {
+            background-color: var(--light-bg);
+            color: var(--bits-blue);
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid var(--bits-blue);
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+        
+        tr:hover {
+            background-color: #fcfdff;
+        }
+        
+        .table-link {
+            color: var(--bits-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .table-link:hover {
+            text-decoration: underline;
+        }
+        
+        .pub-authors b a, .pub-authors b {
+            color: #333; 
+            font-weight: 700;
+        }
+        
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* --- Pagination Controls --- */
+        .table-controls-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .pagination-buttons button {
+            background-color: var(--card-bg);
+            color: var(--bits-blue);
+            border: 1px solid var(--dropdown-border);
+            padding: 5px 10px;
+            margin: 0 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .pagination-buttons button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        
+        .pagination-buttons button.active {
+            background-color: var(--bits-blue);
+            color: white;
+            border-color: var(--bits-blue);
+        }
+
+        .pagination-buttons button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .results-per-page select {
+            padding: 5px 8px;
+            border: 1px solid var(--dropdown-border);
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
+      footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    color: #ffffff; /* or your desired color */
+    font-size: 1em;
+    background-color: #1a165aF0; /* verify this value */
+}
+
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://www.bits-pilani.ac.in/wp-content/webp-express/webp-images/uploads/bits-dubai-campus-color-1.png.webp" alt="BITS Pilani Dubai Campus Logo" class="header-logo">
+        
+        <div class="header-title-container">
+            <h1>Facutly Research Dashboard</h1>
+        </div>
+    </header>
+    
+    <div class="main-content">
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h2>Total Research Works</h2>
+                <p class="metric-value" id="works-count">0</p>
+            </div>
+
+            <div class="metric-card">
+                <h2>Total Citations Received</h2>
+                <p class="metric-value" id="citation-count">0</p>
+            </div>
+            
+            <div class="metric-card">
+                <h2>Avgerage Citations/Work</h2>
+                <p class="metric-value" id="avg-citations">0.0</p>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <h2>Published Papers by Year</h2>
+            <div class="chart-container">
+                <canvas id="papersByYearChart"></canvas>
+            </div>
+        </div>
+
+        <div class="publications-section">
+            <h2>Publications List</h2>
+            
+            <div class="table-controls-top">
+                <input type="text" id="search-input" placeholder="Search by title, author, DOI...">
+                
+                <div id="type-filter-dropdown" class="filter-dropdown">
+                    <button class="filter-button" onclick="toggleDropdown('type-filter-dropdown')">
+                        Document Type <span id="type-filter-count"></span>
+                    </button>
+                    <div id="type-filter-content" class="filter-content">
+                        <div class="no-results" style="padding: 10px; font-style: normal;">Loading Types...</div>
+                    </div>
+                </div>
+                
+                <div id="year-filter-dropdown" class="filter-dropdown">
+                    <button class="filter-button" onclick="toggleDropdown('year-filter-dropdown')">
+                        Year <span id="year-filter-count"></span>
+                    </button>
+                    <div id="year-filter-content" class="filter-content">
+                        <div class="no-results" style="padding: 10px; font-style: normal;">Loading Years...</div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="data-table-container">
+                <table id="publications-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">Title</th>
+                            <th style="width: 10%;">Year</th>
+                            <th style="width: 25%;">Authors</th>
+                            <th style="width: 8%;">Cited by</th>
+                            <th style="width: 12%;">Type</th>
+                            <th style="width: 10%;">Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="publications-tbody">
+                        <tr class="no-results-row">
+                            <td colspan="6" class="no-results">Loading publications...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-controls-bottom">
+                <div id="page-info">Showing 0 to 0 of 0 entries</div>
+                
+                <div class="results-per-page">
+                    Entries per page:
+                    <select id="results-per-page-select" onchange="changeResultsPerPage(this.value)">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div id="pagination-buttons" class="pagination-buttons">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>Developed by Sambath Kumar N | Data retrieved from OpenAlex API.</footer>
+
+    <script>
+        // --- IMPORTANT: Configuration ---
+        const INSTITUTION_ID = "I4210164135"; 
+        const MAILTO_EMAIL = "user@example.com"; 
+
+        // API Endpoints
+        const INST_API_URL = `https://api.openalex.org/institutions/${INSTITUTION_ID}?mailto=${MAILTO_EMAIL}`;
+        // Base API URL for fetching works - removed per_page=200
+        const WORKS_BASE_API_URL = `https://api.openalex.org/works?filter=institutions.id:${INSTITUTION_ID}&sort=publication_date:desc&per_page=200&select=id,title,authorships,publication_date,doi,cited_by_count,type&mailto=${MAILTO_EMAIL}`;
+        const YEAR_COUNT_API_URL = `https://api.openalex.org/works?filter=institutions.id:${INSTITUTION_ID}&group_by=publication_year&per_page=200&mailto=${MAILTO_EMAIL}`; 
+        const TYPE_COUNT_API_URL = `https://api.openalex.org/works?filter=institutions.id:${INSTITUTION_ID}&group_by=type&per_page=200&mailto=${MAILTO_EMAIL}`; 
+
+        let allPublications = []; 
+        let filteredPublications = []; 
+        let myChart = null; 
+        
+        let selectedTypes = new Set();
+        let selectedYears = new Set();
+        
+        // --- PAGINATION STATE ---
+        let currentPage = 1;
+        let resultsPerPage = 10;
+        
+        // --- Helper Functions ---
+
+        const updateMetric = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value.toLocaleString(undefined, { 
+                    maximumFractionDigits: id === 'avg-citations' ? 1 : 0 
+                });
+            }
+        };
+
+        const formatAuthors = (authorships) => {
+            const targetInstId = INSTITUTION_ID.toUpperCase().replace('HTTPS://OPENALEX.ORG/', '');
+
+            const authorLinks = authorships.map(a => {
+                const authorName = a.author.display_name;
+                const isBitsDubaiAuthor = a.institutions.some(inst => 
+                    inst.id && inst.id.toUpperCase().replace('HTTPS://OPENALEX.ORG/', '') === targetInstId
+                );
+
+                let authorHtml = authorName;
+                if (isBitsDubaiAuthor) {
+                    authorHtml = `<b>${authorHtml}</b>`;
+                }
+                
+                return authorHtml;
+            });
+
+            const namesToDisplay = authorLinks.slice(0, 3);
+            let output = namesToDisplay.join(', ');
+
+            if (authorLinks.length > 3) {
+                output += ', et al.';
+            }
+
+            return `<span class="pub-authors">${output}</span>`;
+        };
+
+        const createTableRow = (work) => {
+            const row = document.createElement('tr');
+            
+            const title = work.title || '[No Title Available]';
+            const authorsHTML = formatAuthors(work.authorships); 
+            const date = work.publication_date ? new Date(work.publication_date).getFullYear() : 'N/A';
+            const link = work.doi || `https://openalex.org/${work.id}`; 
+            
+            const hyperlinkedTitle = `<a href="${link}" target="_blank" class="table-link" title="View DOI / OpenAlex Page">${title}</a>`;
+            const displayType = work.type ? work.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'N/A';
+            const sourceDisplay = work.doi ? work.doi.split('/').pop().substring(0, 15) + '...' : 'OpenAlex';
+            const sourceLink = `<a href="${link}" target="_blank" class="table-link">${sourceDisplay}</a>`;
+            
+            row.innerHTML = `
+                <td>${hyperlinkedTitle}</td>
+                <td>${date}</td>
+                <td>${authorsHTML}</td>
+                <td>${work.cited_by_count}</td>
+                <td>${displayType}</td>
+                <td>${sourceLink}</td>
+            `;
+            return row;
+        };
+        
+        // --- Filter Dropdown Functions ---
+
+        window.toggleDropdown = (id) => {
+            const dropdown = document.getElementById(id);
+            // Close any other open dropdowns
+            document.querySelectorAll('.filter-dropdown.open').forEach(openDropdown => {
+                if (openDropdown.id !== id) {
+                    openDropdown.classList.remove('open');
+                }
+            });
+            dropdown.classList.toggle('open');
+        };
+
+        const updateSelectedFilters = (key, value, type, isChecked) => {
+            const filterSet = type === 'type' ? selectedTypes : selectedYears;
+            
+            if (isChecked) {
+                filterSet.add(value);
+            } else {
+                filterSet.delete(value);
+            }
+
+            // Update button display count
+            const countElement = document.getElementById(`${type}-filter-count`);
+            if (filterSet.size > 0) {
+                 countElement.textContent = ` (${filterSet.size})`;
+            } else {
+                 countElement.textContent = '';
+            }
+
+            // Reset to page 1 and apply filters
+            currentPage = 1;
+            // Debounce the filter application
+            clearTimeout(window.filterTimeout);
+            window.filterTimeout = setTimeout(applyFilters, 200); 
+        };
+
+        const applyFilters = () => {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            filteredPublications = allPublications.filter(work => {
+                const matchesSearch = 
+                    (work.title || '').toLowerCase().includes(query) || 
+                    work.authorships.some(a => a.author.display_name.toLowerCase().includes(query)) ||
+                    (work.doi || '').toLowerCase().includes(query);
+
+                const publicationType = work.type;
+                const publicationYear = work.publication_date ? new Date(work.publication_date).getFullYear().toString() : 'N/A';
+
+                const matchesType = selectedTypes.size === 0 || selectedTypes.has(publicationType);
+                const matchesYear = selectedYears.size === 0 || selectedYears.has(publicationYear);
+
+                return matchesSearch && matchesType && matchesYear;
+            });
+            
+            renderPublications(filteredPublications);
+        };
+        
+        // Render Checkbox for Dropdown (Logic for clean text)
+        const renderFilterCheckbox = (containerId, key, count, type) => {
+            const container = document.getElementById(containerId);
+            const tagValue = key; 
+            
+            // 1. Clean up the key: remove URL prefix and any non-essential characters
+            let displayKey = tagValue.replace(/^https:\/\/openalex\.org\/types\//i, '');
+            displayKey = displayKey.split('(')[0].trim(); // Remove potential trailing counts like '(1'
+            
+            // 2. Format to Title Case (e.g., 'book-chapter' -> 'Book Chapter')
+            displayKey = displayKey.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); 
+            
+            const id = `${type}-${tagValue.replace(/[\s\W]+/g, '-')}-checkbox`;
+            
+            const div = document.createElement('div');
+            div.className = 'filter-option';
+            div.innerHTML = `
+                <label for="${id}">
+                    <input type="checkbox" id="${id}" value="${tagValue}">
+                    <span class="filter-text">${displayKey}</span> 
+                    <span class="filter-count">(${count.toLocaleString()})</span>
+                </label>
+            `;
+            
+            const checkbox = div.querySelector('input');
+            checkbox.addEventListener('change', (event) => {
+                updateSelectedFilters(displayKey, tagValue, type, event.target.checked);
+            });
+            
+            container.appendChild(div);
+        };
+
+
+        // --- Pagination Functions ---
+
+        const changePage = (pageNumber) => {
+            if (pageNumber < 1 || pageNumber > Math.ceil(filteredPublications.length / resultsPerPage)) return;
+            currentPage = pageNumber;
+            renderPublications(filteredPublications);
+        };
+        
+        const changeResultsPerPage = (value) => {
+            resultsPerPage = parseInt(value);
+            currentPage = 1; // Reset to first page
+            renderPublications(filteredPublications);
+        };
+
+        const renderPageControls = (totalResults) => {
+            const totalPages = Math.ceil(totalResults / resultsPerPage);
+            const buttonsContainer = document.getElementById('pagination-buttons');
+            const infoElement = document.getElementById('page-info');
+            buttonsContainer.innerHTML = '';
+
+            if (totalResults === 0) {
+                infoElement.textContent = "Showing 0 to 0 of 0 entries";
+                return;
+            }
+
+            const start = (currentPage - 1) * resultsPerPage + 1;
+            const end = Math.min(currentPage * resultsPerPage, totalResults);
+            infoElement.textContent = `Showing ${start.toLocaleString()} to ${end.toLocaleString()} of ${totalResults.toLocaleString()} entries`;
+
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => changePage(currentPage - 1);
+            buttonsContainer.appendChild(prevButton);
+
+            // Page buttons (simplified for space)
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage + 1 < maxButtons) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+
+            if (startPage > 1) {
+                buttonsContainer.appendChild(createPageButton(1, currentPage));
+                if (startPage > 2) {
+                     const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    buttonsContainer.appendChild(dots);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                buttonsContainer.appendChild(createPageButton(i, currentPage));
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    buttonsContainer.appendChild(dots);
+                }
+                buttonsContainer.appendChild(createPageButton(totalPages, currentPage));
+            }
+
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => changePage(currentPage + 1);
+            buttonsContainer.appendChild(nextButton);
+        };
+
+        const createPageButton = (pageNumber, currentPage) => {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = pageNumber;
+            pageButton.className = pageNumber === currentPage ? 'active' : '';
+            pageButton.onclick = () => changePage(pageNumber);
+            return pageButton;
+        };
+        
+        // --- Fetch and Render Filters ---
+
+        const fetchAndRenderFilters = async () => {
+            // This function is still limited by OpenAlex's 200/page limit for group_by, but is generally fast enough to run once.
+            const typeContainer = document.getElementById('type-filter-content');
+            const yearContainer = document.getElementById('year-filter-content');
+            
+            // 1. Fetch Types
+            try {
+                const typeResponse = await fetch(TYPE_COUNT_API_URL);
+                const typeData = await typeResponse.json();
+                typeContainer.innerHTML = '';
+                
+                (typeData.group_by || [])
+                    .sort((a, b) => b.count - a.count) 
+                    .forEach(item => {
+                        renderFilterCheckbox('type-filter-content', item.key, item.count, 'type');
+                    });
+            } catch (error) {
+                console.error("Failed to fetch publication types:", error);
+                typeContainer.innerHTML = `<div class="no-results">Error loading types.</div>`;
+            }
+
+            // 2. Fetch Years
+            try {
+                const yearResponse = await fetch(YEAR_COUNT_API_URL);
+                const yearData = await yearResponse.json();
+                yearContainer.innerHTML = '';
+                
+                (yearData.group_by || [])
+                    .filter(item => item.key && parseInt(item.key) <= new Date().getFullYear()) 
+                    .sort((a, b) => parseInt(b.key) - parseInt(a.key)) 
+                    .forEach(item => {
+                        renderFilterCheckbox('year-filter-content', item.key, item.count, 'year');
+                    });
+            } catch (error) {
+                console.error("Failed to fetch publication years:", error);
+                yearContainer.innerHTML = `<div class="no-results">Error loading years.</div>`;
+            }
+        };
+
+        // --- Chart Function ---
+
+        const fetchAndRenderYearlyChart = async () => {
+             const ctx = document.getElementById('papersByYearChart');
+            
+             try {
+                const response = await fetch(YEAR_COUNT_API_URL);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                
+                const yearDataMap = new Map();
+                (data.group_by || []).forEach(item => {
+                    if (item.key) {
+                        yearDataMap.set(parseInt(item.key), item.count);
+                    }
+                });
+
+                const minYear = Math.min(...Array.from(yearDataMap.keys()), new Date().getFullYear());
+                const maxDesiredYear = new Date().getFullYear(); 
+
+                const years = [];
+                const counts = [];
+                
+                for (let year = minYear; year <= maxDesiredYear; year++) {
+                    years.push(year.toString());
+                    counts.push(yearDataMap.get(year) || 0); 
+                }
+
+                if (myChart) {
+                    myChart.destroy(); 
+                }
+
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            label: 'Number of Published Papers',
+                            data: counts,
+                            backgroundColor: 'rgba(0, 128, 128, 0.7)', 
+                            borderColor: 'rgba(0, 128, 128, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: `Total Works Published Per Year (Up to ${maxDesiredYear})`,
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Paper Count' } },
+                            x: { title: { display: true, text: 'Publication Year' } }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Failed to fetch yearly chart data:", error);
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = `<p class="no-results">Error loading yearly chart data.</p>`;
+                }
+            }
+        };
+
+        // --- Fetch Aggregated Metrics ---
+
+        const fetchAggregatedMetrics = async () => {
+             try {
+                const response = await fetch(INST_API_URL);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                
+                updateMetric('works-count', data.works_count);
+                updateMetric('citation-count', data.cited_by_count);
+
+                if (data.works_count > 0) {
+                    updateMetric('avg-citations', data.cited_by_count / data.works_count); 
+                } else {
+                    updateMetric('avg-citations', 0.0);
+                }
+                
+                // H-Index and i10-Index metrics have been removed from the display.
+                
+            } catch (error) {
+                console.error("Failed to fetch aggregated OpenAlex data:", error);
+                updateMetric('works-count', 'Error');
+                updateMetric('citation-count', 'Error');
+                updateMetric('avg-citations', 'Error');
+            }
+        };
+
+        // --- Fetch ALL Publications using Cursor Pagination ---
+
+        const fetchAllPublications = async () => {
+            let next_cursor = '*';
+            let allResults = [];
+            const WORKS_PER_PAGE = 200; // Max allowed by OpenAlex
+
+            // Update loading message
+            const tbody = document.getElementById('publications-tbody');
+            tbody.innerHTML = `<tr class="no-results-row"><td colspan="6" class="no-results">Fetching **ALL** publications (This may take a moment)...</td></tr>`;
+
+            try {
+                while (next_cursor) {
+                    let url = `${WORKS_BASE_API_URL}&cursor=${next_cursor}&per_page=${WORKS_PER_PAGE}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    
+                    if (data.results && data.results.length > 0) {
+                        allResults = allResults.concat(data.results);
+                        next_cursor = data.meta.next_cursor;
+                        
+                        // Optional: Update status in the table while fetching
+                        tbody.innerHTML = `<tr class="no-results-row"><td colspan="6" class="no-results">Fetched ${allResults.length.toLocaleString()} records so far...</td></tr>`;
+                    } else {
+                        next_cursor = null;
+                    }
+                }
+                return allResults;
+            } catch (error) {
+                console.error("Failed to fetch all works list:", error);
+                tbody.innerHTML = `<tr class="no-results-row"><td colspan="6" class="no-results">Error loading publications. Please check the network connection.</td></tr>`;
+                return [];
+            }
+        };
+
+
+        const fetchAndRenderPublications = async () => {
+            allPublications = await fetchAllPublications(); 
+            filteredPublications = allPublications; 
+            
+            // Check if data was retrieved successfully before rendering
+            if (allPublications.length > 0) {
+                 renderPublications(filteredPublications);
+            } else if (document.getElementById('publications-tbody').querySelector('.no-results-row').textContent.includes('Fetching')) {
+                // If fetching completed with 0 results, update message
+                 document.getElementById('publications-tbody').innerHTML = `<tr class="no-results-row"><td colspan="6" class="no-results">No publications found for this institution.</td></tr>`;
+            }
+        };
+
+
+        const renderPublications = (publications) => {
+            const tbody = document.getElementById('publications-tbody');
+            tbody.innerHTML = ''; 
+
+            if (publications.length === 0) {
+                tbody.innerHTML = `<tr class="no-results-row"><td colspan="6" class="no-results">No publications found matching the search criteria or current filters.</td></tr>`;
+                renderPageControls(0);
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = startIndex + resultsPerPage;
+            const publicationsToDisplay = publications.slice(startIndex, endIndex);
+
+            publicationsToDisplay.forEach(work => {
+                tbody.appendChild(createTableRow(work));
+            });
+            
+            renderPageControls(publications.length);
+        };
+
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAggregatedMetrics();
+            fetchAndRenderYearlyChart(); 
+            fetchAndRenderPublications(); // Fetches ALL records now
+            fetchAndRenderFilters(); 
+
+            // Add event listener to close dropdowns when clicking outside
+            document.addEventListener('click', (event) => {
+                document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+                    if (!dropdown.contains(event.target)) {
+                        dropdown.classList.remove('open');
+                    }
+                });
+            });
+
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', () => {
+                currentPage = 1; 
+                clearTimeout(window.filterTimeout);
+                window.filterTimeout = setTimeout(applyFilters, 200); 
+            });
+        });
+    </script>
+</body>
+</html>
